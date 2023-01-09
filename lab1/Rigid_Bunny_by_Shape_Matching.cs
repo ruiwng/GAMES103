@@ -9,8 +9,15 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 	Vector3[] Q;
 	Vector3[] V;
 	Matrix4x4 QQt = Matrix4x4.zero;
+	
+	Vector3 init_position;
+	Quaternion init_rotation;
+	Vector3[] init_vertices;
+	float restitution = 0.5f;    // for collision
+	float mu_t =0.5f;
 
-
+	float linear_decay	= 0.999f;
+	
     // Start is called before the first frame update
     void Start()
     {
@@ -18,7 +25,7 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
         V = new Vector3[mesh.vertices.Length];
         X = mesh.vertices;
         Q = mesh.vertices;
-
+		init_vertices = mesh.vertices;
         //Centerizing Q.
         Vector3 c=Vector3.zero;
         for(int i=0; i<Q.Length; i++)
@@ -46,6 +53,9 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 			V[i][0]=4.0f;
 
 		Update_Mesh(transform.position, Matrix4x4.Rotate(transform.rotation), 0);
+		init_position = transform.position;
+		init_rotation = transform.rotation;
+
 		transform.position=Vector3.zero;
 		transform.rotation=Quaternion.identity;
    	}
@@ -147,14 +157,43 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 			Vector3 x=(Vector3)(R*Q[i])+c;
 
 			V[i]+=(x-X[i])*inv_dt;
+			if(i == 0) {
+				Debug.Log("UpdateMesh " + V[i]);
+			}
 			X[i]=x;
 		}	
 		Mesh mesh = GetComponent<MeshFilter>().mesh;
 		mesh.vertices=X;
    	}
 
+	void Collision_Plane(Vector3 P, Vector3 N, float inv_dt)
+	{
+		Vector3 p_normal, p_tangent;
+		Vector3 v_normal, v_tangent, v_normal_new, v_tangent_new;
+		for(int i = 0; i < X.Length; ++i) {
+			if(Vector3.Dot(X[i] - P, N) > 0.0f) {
+				continue;
+			}
+			if(Vector3.Dot(V[i], N) > 0.0f) {
+				continue;
+			}
+			v_normal = Vector3.Dot(V[i], N) * N;
+			v_tangent = V[i] - v_normal;
+			float a = Mathf.Max(1.0f - mu_t * (1.0f + restitution) * v_normal.magnitude / v_tangent.magnitude, 0.0f);
+			v_normal_new = -restitution * v_normal;
+			v_tangent_new = a * v_tangent;
+			V[i] = v_normal_new + v_tangent_new;
+
+			p_normal = Vector3.Dot(X[i] - P, N) * N;
+			p_tangent = X[i] - P - p_normal;
+			X[i] = P + p_tangent + (-restitution) * p_normal;
+		}
+	}
+
 	void Collision(float inv_dt)
 	{
+		Collision_Plane(new Vector3(0, 0.01f, 0), new Vector3(0, 1, 0), inv_dt);
+		Collision_Plane(new Vector3(2, 0, 0), new Vector3(-1, 0, 0), inv_dt);
 	}
 
     // Update is called once per frame
@@ -162,9 +201,30 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
     {
   		float dt = 0.015f;
 
+		// Game Control
+		if(Input.GetKey("r") && launched) {
+			for(int i=0; i<X.Length; i++) {
+				V[i]=new Vector3(4.0f, 0.0f, 0.0f);
+				X[i] = init_vertices[i];
+			}
+			Debug.Log("3333333333333 before Q " + Q[0] + " X " + X[0] + " V " + V[0]);
+			Update_Mesh(init_position, Matrix4x4.Rotate(init_rotation), 0);
+			Debug.Log("3333333333333 after Q " + Q[0] + " X " + X[0] + " V " + V[0]);
+			launched = false;
+		}
+		if(Input.GetKey("l") && !launched) {
+			launched = true;
+		}
+
+		if(!launched) {
+			return;
+		}
   		//Step 1: run a simple particle system.
         for(int i=0; i<V.Length; i++)
         {
+			V[i] = V[i] + new Vector3(0.0f, -9.8f, 0.0f) * dt;
+			V[i] *= 1.0f - (1.0f - linear_decay) * dt;
+			X[i] += V[i] * dt;
         }
 
         //Step 2: Perform simple particle collision.
@@ -173,9 +233,27 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 		// Step 3: Use shape matching to get new translation c and 
 		// new rotation R. Update the mesh by c and R.
         //Shape Matching (translation)
-		
+		Vector3 c=Vector3.zero;
+        for(int i=0; i<X.Length; i++)
+        	c+=X[i];
+        c/=X.Length;
+		// Debug.Log("33333333333333333 c " + c);
 		//Shape Matching (rotation)
-		
-		//Update_Mesh(c, R, 1/dt);
+		Matrix4x4 YRt = Matrix4x4.zero;
+		for(int i=0; i<X.Length; i++)
+		{
+			YRt[0, 0]+=(X[i][0] - c[0])*Q[i][0];
+			YRt[0, 1]+=(X[i][0] - c[0])*Q[i][1];
+			YRt[0, 2]+=(X[i][0] - c[0])*Q[i][2];
+			YRt[1, 0]+=(X[i][1] - c[1])*Q[i][0];
+			YRt[1, 1]+=(X[i][1] - c[1])*Q[i][1];
+			YRt[1, 2]+=(X[i][1] - c[1])*Q[i][2];
+			YRt[2, 0]+=(X[i][2] - c[2])*Q[i][0];
+			YRt[2, 1]+=(X[i][2] - c[2])*Q[i][1];
+			YRt[2, 2]+=(X[i][2] - c[2])*Q[i][2];
+		}
+		YRt[3, 3]=1;
+		Matrix4x4 R = Get_Rotation(YRt*QQt.inverse);
+		Update_Mesh(c, R, 1/dt);
     }
 }
