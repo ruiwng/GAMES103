@@ -1,1 +1,2 @@
 # GAMES103
+The assignments of GAMES103 (Introduction to Physically based animation) whose instructor is Huamin Wang, if you are interested, please refer to http://games-cn.org/games103/ for more information. this lecture mainly includes six parts: rigid body dynamics and contacts, mass-spring systems, constrained approaches, collision handling, soft body dynamics(finite element method) and fluid dynamics.
