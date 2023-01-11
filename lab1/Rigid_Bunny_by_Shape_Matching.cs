@@ -199,7 +199,7 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-  		float dt = 0.015f;
+  		float dt = Time.deltaTime;
 
 		// Game Control
 		if(Input.GetKey("r") && launched) {

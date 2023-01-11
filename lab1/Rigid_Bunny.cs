@@ -159,6 +159,7 @@ public class Rigid_Bunny : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
+		dt = Time.deltaTime;
 		//Game Control
 		if(Input.GetKey("r") && launched)
 		{
@@ -168,7 +169,7 @@ public class Rigid_Bunny : MonoBehaviour
 		}
 		if(Input.GetKey("l") && !launched)
 		{
-			v = new Vector3 (4.5, 2, 0);
+			v = new Vector3 (4.5f, 2.0f, 0);
 			w = new Vector3(0, 0, 0);
 			launched=true;
 			stable_state = false;
