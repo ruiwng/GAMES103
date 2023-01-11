@@ -8,6 +8,9 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 	Vector3[] X;
 	Vector3[] Q;
 	Vector3[] V;
+	Vector3[] N;
+	Vector3[] current_normals;
+	
 	Matrix4x4 QQt = Matrix4x4.zero;
 	
 	Vector3 init_position;
@@ -17,7 +20,9 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 	float mu_t =0.5f;
 
 	float linear_decay	= 0.999f;
-	
+
+	Vector3 last_c = Vector3.zero;
+	bool stable_state = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,6 +30,8 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
         V = new Vector3[mesh.vertices.Length];
         X = mesh.vertices;
         Q = mesh.vertices;
+		N = mesh.normals;
+		current_normals = mesh.normals;
 		init_vertices = mesh.vertices;
         //Centerizing Q.
         Vector3 c=Vector3.zero;
@@ -161,9 +168,13 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 				Debug.Log("UpdateMesh " + V[i]);
 			}
 			X[i]=x;
-		}	
+		}
+		for(int i = 0; i < N.Length; i++) {
+			current_normals[i] = R * N[i];
+		}
 		Mesh mesh = GetComponent<MeshFilter>().mesh;
 		mesh.vertices=X;
+		mesh.normals = current_normals;
    	}
 
 	void Collision_Plane(Vector3 P, Vector3 N, float inv_dt)
@@ -208,15 +219,20 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 				X[i] = init_vertices[i];
 			}
 			Debug.Log("3333333333333 before Q " + Q[0] + " X " + X[0] + " V " + V[0]);
+			init_rotation = Random.rotation;
 			Update_Mesh(init_position, Matrix4x4.Rotate(init_rotation), 0);
 			Debug.Log("3333333333333 after Q " + Q[0] + " X " + X[0] + " V " + V[0]);
 			launched = false;
 		}
 		if(Input.GetKey("l") && !launched) {
 			launched = true;
+			stable_state = false;
 		}
 
 		if(!launched) {
+			return;
+		}
+		if(stable_state) {
 			return;
 		}
   		//Step 1: run a simple particle system.
@@ -255,5 +271,10 @@ public class Rigid_Bunny_by_Shape_Matching : MonoBehaviour
 		YRt[3, 3]=1;
 		Matrix4x4 R = Get_Rotation(YRt*QQt.inverse);
 		Update_Mesh(c, R, 1/dt);
+		Debug.Log("magnitude " + (c-last_c).magnitude);
+		if((c-last_c).magnitude < 0.0005f) {
+			stable_state = true;
+		}
+		last_c = c;
     }
 }
