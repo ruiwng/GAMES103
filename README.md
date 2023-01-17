@@ -84,7 +84,7 @@ $$
 That is to say:
 
 $$
-r \times q =\\
+r \times q =
 \begin{bmatrix}
 r_y * q_z - r_z * q_y\\
 r_z * q_x - r_x * q_z\\
