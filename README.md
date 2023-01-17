@@ -37,18 +37,36 @@ $$
 
 
 $$
-v_{N, i} = (v_i * N)N \\
-v_{T, i} = v_i - v_{N, i} \\
-a = max(1 - \mu_T(1 + \mu_N)||v_{N,i}||/||v_{T, i}||, 0) \\
-v_{N, i}^{new} = -\mu_Nv_{N, i} \\
-v_{T, i}^{new} = av_{T, i} \\
+v_{N, i} = (v_i * N)N
+$$
+
+$$
+v_{T, i} = v_i - v_{N, i}
+$$
+
+$$
+a = max(1 - \mu_T(1 + \mu_N)||v_{N,i}||/||v_{T, i}||, 0)
+$$
+
+$$
+v_{N, i}^{new} = -\mu_Nv_{N, i}
+$$
+
+$$
+v_{T, i}^{new} = av_{T, i}
+$$
+
+$$
 v_i^{new} = v_{N, i}^{new} + v_{T, i}^{new}
 $$
 
 6. And then we compute the impulse **j** by the  $v_i^{new}$ and $v_i$ (where $I$ is the inertia matrix of the bunny in the reference state):
 
 $$
-K = \dfrac{1}{M} * \mathbb{I} - (Rr_i)^*I^{-1}(Rr_i)^*\\
+K = \dfrac{1}{M} * \mathbb{I} - (Rr_i)^* I^{-1} (Rr_i)^*
+$$
+
+$$
 j = K^{-1}(v_i^{new} - v_i)
 $$
 
@@ -73,7 +91,7 @@ r_z * q_x - r_x * q_z\\
 r_x * q_y - r_y * q_y\\
 \end{bmatrix} \\
 =\\
-\begin{bmatrix}\\
+\begin{bmatrix}
 0 & -r_z & r_y\\
 r_z & 0 & -r_x\\
 -r_y & r_x & 0\\
@@ -88,8 +106,12 @@ $$
    
    
 7. Finally, we update the *v* and *w* using impuse computed from the former step:
+
 $$
-v = v + \dfrac{1}{M}j\\
+v = v + \dfrac{1}{M}j
+$$
+
+$$
 w = w + I^{-1}(Rr_i\times j)
 $$
    
