@@ -84,13 +84,13 @@ $$
 That is to say:
 
 $$
-r \times q =
+r \times q =\\
 \begin{bmatrix}
 r_y * q_z - r_z * q_y\\
 r_z * q_x - r_x * q_z\\
 r_x * q_y - r_y * q_y\\
-\end{bmatrix} \\
-=\\
+\end{bmatrix}
+ = \
 \begin{bmatrix}
 0 & -r_z & r_y\\
 r_z & 0 & -r_x\\
