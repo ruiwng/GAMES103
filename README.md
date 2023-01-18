@@ -152,15 +152,14 @@ R = Polar(A)
 $$
 
 3. Finally update very vertex:
-   $$
-   v_i = (c + Rr_i - x_i) / \Delta t
-   $$
 
-   $$
-   x_i = c + R r_i
-   $$
+$$
+v_i = (c + Rr_i - x_i) / \Delta t
+$$
 
-   
+$$
+x_i = c + R r_i
+$$
 
 A difference between this method and the first one is that, to tranform the bunny, the first method is modifying the bunny's position and orientation, however, In this method, the bunny's poisition and orientation are set to identity, it modifies bunny vertices position for every frame, which maybe a little clumsy and time consuming. another side effect that is prone to ignore is that the shading is wrong caused by not updating the normal of all vertices. so you may add several lines of code in the Update_Mesh method to solve this problem. here are the code snippet, note how the normals are updated. (caution: do not apply the translation to the normal)
 
