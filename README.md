@@ -103,8 +103,8 @@ q_z\\
 \end{bmatrix}
 = r^*q
 $$
-   
-   
+
+
 7. Finally, we update the *v* and *w* using impuse computed from the former step:
 
 $$
@@ -114,13 +114,55 @@ $$
 $$
 w = w + I^{-1}(Rr_i\times j)
 $$
-   
+
 
 ### Shape Matching Method
 
 Here is the final result of shape matching method:
 ![shape_matching](lab1/results/shape_matching.gif)
-A difference between this method and the first one is that, to tranform the bunny, the first method is modifying the bunny's position and orientation, however, In this method, the bunny's poisition and orientation are set to identity, it modifies bunny vertices position for every frame, which maybe a little clumsy and time consuming. another side effect that is prone to ignore is that the shading is wrong caused by not updating the normal of all vertices. so you may add several lines of code in the Update_Mesh method to solve this problem. note how the normals are updated. (caution: do not apply the translation to the normal)
+
+Here are steps to implement this method:
+
+1. Update each vertex independently:
+
+$$
+f_i = Force(x_i, v_i)
+$$
+
+$$
+v_i = v_i + \Delta t * m_i^{-1}f_i
+$$
+
+$$
+y_i = x_i + \Delta t v_i
+$$
+
+2. Computing the rigid transformation matrix according to the the vertices' new position, here we use polar composition to get rotation matrix $R$ from $A$, as here only rotation exists, no shearing and stretching:
+
+$$
+c = \dfrac{1}{N} \sum_{i = 0}^{n - 1} y_i
+$$
+
+$$
+A = (\sum_{i = 0}^{n-1}(y_i - c)r_i^T)(\sum_{i = 0}^{n - 1}r_ir_i^T)^{-1}
+$$
+
+$$
+R = Polar(A)
+$$
+
+3. Finally update very vertex:
+   $$
+   v_i = (c + Rr_i - x_i) / \Delta t
+   $$
+
+   $$
+   x_i = c + R r_i
+   $$
+
+   
+
+A difference between this method and the first one is that, to tranform the bunny, the first method is modifying the bunny's position and orientation, however, In this method, the bunny's poisition and orientation are set to identity, it modifies bunny vertices position for every frame, which maybe a little clumsy and time consuming. another side effect that is prone to ignore is that the shading is wrong caused by not updating the normal of all vertices. so you may add several lines of code in the Update_Mesh method to solve this problem. here are the code snippet, note how the normals are updated. (caution: do not apply the translation to the normal)
 
 ```C#
 void Update_Mesh(Vector3 c, Matrix4x4 R, float inv_dt)
