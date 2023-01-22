@@ -136,21 +136,48 @@ public class implicit_model : MonoBehaviour
 		Vector3[] X = mesh.vertices;
 		
 		//Handle colllision.
-
+		GameObject sphere = GameObject.Find("Sphere");
+		Vector3 center = sphere.transform.position;
+		float r = 2.7f;
+		Vector3 direction;
+		for(int i = 0; i < X.Length; ++i) {
+			if(i == 0 || i == 20) {
+				continue;
+			}
+			direction = (X[i] - center);
+			if(direction.magnitude > r) {
+				continue;
+			}
+			direction /= direction.magnitude;
+			V[i] += (center + r * direction - X[i]) / t;
+			X[i] = center + r * direction;
+		}
 		mesh.vertices = X;
 	}
 
 	void Get_Gradient(Vector3[] X, Vector3[] X_hat, float t, Vector3[] G)
 	{
 		//Momentum and Gravity.
-		
+		for(int i = 0; i < X.Length; ++i) {
+			G[i] = mass * (X[i] - X_hat[i]) / (t * t);
+			G[i] += mass * new Vector3(0.0f, 9.8f, 0.0f);
+		}
 		//Spring Force.
-		
+		for(int k = 0; k < E.Length; k += 2) {
+			int i = E[k];
+			int j = E[k + 1];
+			Vector3 Vji = X[i] - X[j];
+			float magnitude = Vji.magnitude;
+			Vector3 force = spring_k * (1.0f - L[k / 2] / magnitude) * Vji;
+			G[i] += force;
+			G[j] -= force;
+		}
 	}
 
     // Update is called once per frame
 	void Update () 
 	{
+		t = Time.deltaTime;
 		Mesh mesh = GetComponent<MeshFilter> ().mesh;
 		Vector3[] X 		= mesh.vertices;
 		Vector3[] last_X 	= new Vector3[X.Length];
@@ -159,14 +186,31 @@ public class implicit_model : MonoBehaviour
 
 		//Initial Setup.
 
+		for(int i = 0; i < X.Length; ++i) {
+			V[i] *= damping;
+			X[i] = X_hat[i] = X[i] + t * V[i];
+		}
+
 		for(int k=0; k<32; k++)
 		{
 			Get_Gradient(X, X_hat, t, G);
 			
 			//Update X by gradient.
+			for(int j = 0; j < X.Length; ++j) {
+				if(j == 0 || j == 20) {
+					continue;
+				}
+				X[j] -= G[j] / (1.0f / (t * t) * mass + 4 * spring_k);
+			}
 			
 		}
 
+		for(int k = 0; k < X.Length; ++k) {
+			if(k == 0 || k == 20) {
+				continue;
+			}
+			V[k] += (X[k] - X_hat[k]) / t;
+		}
 		//Finishing.
 		
 		mesh.vertices = X;
