@@ -9,6 +9,8 @@ public class PBD_model: MonoBehaviour {
 	float[] 	L;
 	Vector3[] 	V;
 
+	Vector3[]  sum_x;
+	int[]      sum_n;
 
 	// Use this for initialization
 	void Start () 
@@ -19,6 +21,9 @@ public class PBD_model: MonoBehaviour {
 		int n=21;
 		Vector3[] X  	= new Vector3[n*n];
 		Vector2[] UV 	= new Vector2[n*n];
+		sum_x = new Vector3[X.Length];
+		sum_n = new int[X.Length];
+
 		int[] T	= new int[(n-1)*(n-1)*6];
 		for(int j=0; j<n; j++)
 		for(int i=0; i<n; i++)
@@ -133,6 +138,28 @@ public class PBD_model: MonoBehaviour {
 
 		//Apply PBD here.
 		//...
+		for(int k = 0; k < vertices.Length; ++k) {
+			sum_x[k] = new Vector3(0.0f, 0.0f, 0.0f);
+			sum_n[k] = 0;
+		}
+
+		for(int k = 0; k < E.Length; k += 2) {
+			int i = E[k];
+			int j = E[k + 1];
+			sum_x[i] += (vertices[i] + vertices[j] + L[k / 2] * (vertices[i] - vertices[j]).normalized) * 0.5f;
+			sum_x[j] += (vertices[i] + vertices[j] - L[k / 2] * (vertices[i] - vertices[j]).normalized) * 0.5f;
+			sum_n[i] += 1;
+			sum_n[j] += 1;
+		}
+
+		for(int k = 0; k < vertices.Length; ++k) {
+			if(k == 0 || k == 20) {
+				continue;
+			}
+			Vector3 newP = (0.2f * vertices[k] + sum_x[k]) / (0.2f + sum_n[k]);
+			V[k] += (newP - vertices[k]) / t;
+			vertices[k] = newP;
+		}
 		mesh.vertices = vertices;
 	}
 
@@ -143,12 +170,29 @@ public class PBD_model: MonoBehaviour {
 		
 		//For every vertex, detect collision and apply impulse if needed.
 		//...
+		GameObject sphere = GameObject.Find("Sphere");
+		Vector3 center = sphere.transform.position;
+		float r = 2.7f;
+		Vector3 direction;
+		for(int i = 0; i < X.Length; ++i) {
+			if (i == 0 || i == 20) {
+				continue;
+			}
+			direction = X[i] - center;
+			if(direction.magnitude > r) {
+				continue;
+			}
+			direction /= direction.magnitude;
+			V[i] += (center + r * direction - X[i]) / t;
+			X[i] = center + r * direction;
+		}
 		mesh.vertices = X;
 	}
 
 	// Update is called once per frame
 	void Update () 
 	{
+		t = Time.deltaTime;
 		Mesh mesh = GetComponent<MeshFilter> ().mesh;
 		Vector3[] X = mesh.vertices;
 
@@ -157,6 +201,9 @@ public class PBD_model: MonoBehaviour {
 			if(i==0 || i==20)	continue;
 			//Initial Setup
 			//...
+			V[i] *= damping;
+			V[i] += t * new Vector3(0.0f, -9.8f, 0.0f);
+			X[i] += t * V[i];
 		}
 		mesh.vertices = X;
 
