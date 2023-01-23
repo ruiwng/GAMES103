@@ -218,7 +218,7 @@ $$
 g = \dfrac{1}{\Delta t^2}M(x - \tilde x) - f(x)
 $$
 
-​		 As you can see, this formula includes two parts, the first part can be calculated vertex by vertex, the second part can be solved 		 by looping through all the springs and compting the force of the two vertices the spring connects.
+As you can see, this formula includes two parts, the first part can be calculated vertex by vertex, the second part can be solved by looping through all the springs and compting the force of the two vertices the spring connects.
 
 3. Use Newton's method to solve the non-linear optimization problem, as the Hessian matrix is complicated to construct, here we use a simplified one by considering Hessian matrix as a diagonal one. here it is:
 
@@ -242,41 +242,41 @@ Here is the final result:
 
 ![implicit_model](lab2/results/implicit_model.gif)
 
-## Position-Based Dynamics (PBD)
+### Position-Based Dynamics (PBD)
 
 In this implementation, there are several steps as follows:
 
-1. Setup the initial status, update the velocity and position of very vertex indepedently, just as a particle system. the damping and gravity should be considered here.
+1. Setup the initial status, update the velocity and position of very vertex independently, just as a particle system. the damping and gravity should be considered here.
 
-2. Strain limiting. apply the spring constrain to every vertex, that is to say, change the position of every vertex accordingly, by looping through all the springs and accumulating the spring constrain to the two vertices that it connects. here we use two temporary arrays *sum_x* and *sum_n* to store the sums of vertex position updates and vertex count updates.
-
-$$
-sum\_x_i \leftarrow sum\_x_i + \dfrac{1}{2}(x_i + x_j + L_e \dfrac{x_i - x_j}{||x_i - x_j||})
-$$
+2. Strain limiting. apply the spring constrain to every vertex, that is to say, change the position of every vertex accordingly, by looping through all the springs and accumulating the spring constrain to the two vertices that it connects. here we use two temporary arrays *sumx* and *sumn* to store the sums of vertex position updates and vertex count updates.
 
 $$
-sum\_n_i \leftarrow sum\_n_i + 1
+sumx_i \leftarrow sumx_i + \dfrac{1}{2}(x_i + x_j + L_e \dfrac{x_i - x_j}{||x_i - x_j||})
 $$
 
 $$
-sum\_x_j \leftarrow sum\_x_j + \dfrac{1}{2}(x_i + x_j - L_e \dfrac{x_i - x_j}{||x_i - x_j||})
+sumn_i \leftarrow sumn_i + 1
 $$
 
 $$
-sum\_n_j \leftarrow sum\_n_j + 1
+sumx_j \leftarrow sumx_j + \dfrac{1}{2}(x_i + x_j - L_e \dfrac{x_i - x_j}{||x_i - x_j||})
+$$
+
+$$
+sumn_j \leftarrow sumn_j + 1
 $$
 
 3. Finally update each vertex as:
 
 $$
-v_i \leftarrow v_i + \dfrac{1}{\Delta t}(\dfrac{0.2x_i + sum\_x_i}{0.2 + sum\_n_i} - x_i)
+v_i \leftarrow v_i + \dfrac{1}{\Delta t}(\dfrac{0.2x_i + sumx_i}{0.2 + sumn_i} - x_i)
 $$
 
 $$
-x_i \leftarrow \dfrac{0.2 x_i + sum\_x_i}{0.2 + sum\_n_i}
+x_i \leftarrow \dfrac{0.2 x_i + sumx_i}{0.2 + sumn_i}
 $$
 
-Note that we should execute the last two steps multiple times to ensure that edge lengths are well preserved. Otherwise, you 		may see overly stretching artifacts.
+Note that we should execute the last two steps multiple times to ensure that edge lengths are well preserved. Otherwise, you may see overly stretching artifacts.
 
 Here is the final result:
 
