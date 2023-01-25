@@ -336,7 +336,9 @@ X_{01} & X_{02} & X_{03}
 \end {bmatrix}
 ^{-T}
 $$
+
    According to Newton's third law, we can get $f_0$ by:
+   
 $$
 f_0 = -f_1 - f_2 - f_3
 $$
