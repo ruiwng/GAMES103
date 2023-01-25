@@ -282,4 +282,74 @@ Here is the final result:
 
 ![PBD_model](lab2/results/PBD_model.gif)
 
+
+
+## Bouncy House
+
+In this assignment, we implement the finite element method for the elastic body simulation. Here are the steps:
+
+1. Construct edge matrices. In the Start function, we construct the edge matrices for every tetrahedron in the reference state. since these matrices is unchanged over the period of the simuation, we compute these only once at the start time. here is the edge matrix ($X_{ij}$ represents the vector from the position  of vertex *i* to vertex *j*  of the tetrahedron respectively in the initial state):
+   
+$$
+\begin {bmatrix}
+X_{01} & X_{02} & X_{03}
+\end {bmatrix}
+$$
+
+2. Initial setup. In the _Update function, we write the simulation of every vertex as a particle system, applying damping to every vertex, and initialize every vertex's force as gravity. 
+
+3. Compute deformation gradient, where $x_{ij}$ denotes the vector from the position of vertex *i* to vertex *j* of the tetrahedron in the current state:
+
+$$
+F = 
+\begin {bmatrix}
+x_{01} & x_{02} & x_{03}
+\end {bmatrix}
+\begin {bmatrix}
+X_{01} & X_{02} & X_{03}
+\end {bmatrix}
+^{-1}
+$$
+
+4. Compute green strain:
+
+$$
+G = \dfrac{1}{2}(F^TF - I)
+$$
+
+5. Compute second Piola-Kirchhoff stress:
+
+$$
+S = 2s_1G + s_0 tr(G) I
+$$
+
+6. Compute the forces for the four vertices, here $A_{ref}$ is the volume of the tetrahedron in the reference state:
+
+$$
+\begin {bmatrix}
+f_1 & f_2 & f_3
+\end {bmatrix}
+=
+-A^{ref}FS
+\begin {bmatrix}
+X_{01} & X_{02} & X_{03}
+\end {bmatrix}
+^{-T}
+$$
+
+   According to Newton's third law, we can get $f_0$ by:
+
+$$
+f_0 = -f_1 - f_2 - f_3
+$$
+
+
+
+7. Apply Laplacian smoothing. Laplacian smoothing is crucial to numerical stability. without it, this simulation is easy to blow up. To do it, for every evertex, sum up all of its neighbor's velocity, and blend it into its own velocity.
+
+
+The final result is shown as follows:
+
+![bouncy house](lab3/results/bouncy_house.gif)
+
 ​			
