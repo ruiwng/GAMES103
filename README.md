@@ -288,7 +288,7 @@ Here is the final result:
 
 In this assignment, we implement the finite element method for the elastic body simulation. Here are the steps:
 
-1. Construct edge matrices. In the Start function, we construct the edge matrices for every tetrahedron in the reference state. since these matrices is unchanged over the period of the simuation, we compute these only once at the start time. here is the edge matrix ($X_{ij}$ represents the vector from the position  of vertex *i* to vertex *j*  of the tetrahedron respectively in the initial state):
+1. Construct edge matrices. In the Start function, we construct the edge matrices for every tetrahedron in the reference state. since these matrices is unchanged over the period of the simuation, we compute these only once at the start time. here is the edge matrix (where $X_{ij}$ represents the vector from the position  of vertex *i* to vertex *j*  of the tetrahedron respectively in the initial state):
    
 $$
 \begin {bmatrix}
