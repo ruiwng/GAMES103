@@ -146,23 +146,114 @@ public class wave_motion : MonoBehaviour
 	{		
 		//Step 1:
 		//TODO: Compute new_h based on the shallow wave model.
-
+		for(int i = 0; i < size; ++i)
+		for(int j = 0; j < size; ++j) {
+			new_h[i, j] = h[i, j] + damping * (h[i, j] - old_h[i, j]);
+			if(i > 0)
+				new_h[i, j] += rate * (h[i - 1, j] - h[i, j]);
+			if(i < size - 1)
+				new_h[i, j] += rate * (h[i + 1, j] - h[i, j]);
+			if(j > 0)
+				new_h[i, j] += rate * (h[i, j - 1] - h[i, j]);
+			if(j < size - 1)
+				new_h[i, j] += rate * (h[i, j + 1] - h[i, j]);
+		}
 		//Step 2: Block->Water coupling
 		//TODO: for block 1, calculate low_h.
 		//TODO: then set up b and cg_mask for conjugate gradient.
 		//TODO: Solve the Poisson equation to obtain vh (virtual height).
+		GameObject cube = GameObject.Find("Cube");
+		Vector3 center = cube.transform.position;
+		Vector2 lower_left = new Vector2(center.x - 0.5f, center.z - 0.5f);
+		Vector2 upper_right = new Vector2(center.x + 0.5f, center.z + 0.5f);
+		int li = (int) Mathf.Max(0, Mathf.Ceil((lower_left.x + 5.0f) / 0.1f));
+		int ui = (int) Mathf.Min(size - 1, Mathf.Floor((upper_right.x + 5.0f)/ 0.1f));
+		int lj = (int) Mathf.Max(0, Mathf.Ceil((lower_left.y + 5.0f) / 0.1f));
+		int uj = (int) Mathf.Min(size - 1, Mathf.Floor((upper_right.y + 5.0f) / 0.1f));
+
+		int big_li = Mathf.Max(li - 2, 0);
+		int big_ui = Mathf.Min(ui + 2, size - 1);
+		int big_lj = Mathf.Max(lj - 2, 0);
+		int big_uj = Mathf.Min(uj + 2, size - 1);
+
+		for(int i = big_li; i <= big_ui; ++i)
+		for(int j = big_lj; j <= big_uj; ++j) {
+			if(i >= li && i <= ui && j >= lj && j <= uj) {
+				cg_mask[i, j] = true;
+				low_h[i, j] = -0.5f;
+				b[i, j] = (new_h[i, j] - low_h[i, j]) / rate;
+			} else {
+				cg_mask[i, j] = false;
+				vh[i, j] = 0.0f;
+			}
+		}
+		Conjugate_Gradient(cg_mask, b, vh, big_li, big_ui, big_lj, big_uj);
+
+		for(int i = big_li; i <= big_ui; ++i)
+		for(int j = big_lj; j <= big_uj; ++j) {
+			if(i > 0)
+				new_h[i, j] += rate * gamma * (vh[i - 1, j] - vh[i, j]);
+			if(i < size - 1)
+				new_h[i, j] += rate * gamma * (vh[i + 1, j] - vh[i, j]);
+			if(j > 0)
+				new_h[i, j] += rate * gamma * (vh[i, j - 1] - vh[i, j]);
+			if(i < size - 1)
+				new_h[i, j] += rate * gamma * (vh[i, j + 1] - vh[i, j]);
+		}
 
 		//TODO: for block 2, calculate low_h.
 		//TODO: then set up b and cg_mask for conjugate gradient.
 		//TODO: Solve the Poisson equation to obtain vh (virtual height).
-	
+		GameObject block = GameObject.Find("Block");
+		center = block.transform.position;
+		lower_left = new Vector2(center.x - 0.5f, center.z - 0.5f);
+		upper_right = new Vector2(center.x + 0.5f, center.z + 0.5f);
+		li = (int) Mathf.Max(0, Mathf.Ceil((lower_left.x + 5.0f) / 0.1f));
+		ui = (int) Mathf.Min(size - 1, Mathf.Floor((upper_right.x + 5.0f) / 0.1f));
+		lj = (int) Mathf.Max(0, Mathf.Ceil((lower_left.y + 5.0f) / 0.1f));
+		uj = (int) Mathf.Min(size - 1, Mathf.Floor((upper_right.y + 5.0f) / 0.1f));
+
+		big_li = Mathf.Max(li - 2, 0);
+		big_ui = Mathf.Min(ui + 2, size - 1);
+		big_lj = Mathf.Max(lj - 2, 0);
+		big_uj = Mathf.Min(uj + 2, size - 1);
+
+		for(int i = big_li; i <= big_ui; ++i)
+		for(int j = big_lj; j <= big_uj; ++j) {
+			if(i >= li && i <= ui && j >= lj && j <= uj) {
+				cg_mask[i, j] = true;
+				low_h[i, j] = -0.5f;
+				b[i, j] = (new_h[i, j] - low_h[i, j]) / rate;
+			} else {
+				cg_mask[i, j] = false;
+				vh[i, j] = 0.0f;
+			}
+		}
+
 		//TODO: Diminish vh.
+		Conjugate_Gradient(cg_mask, b, vh, big_li, big_ui, big_lj, big_uj);
+
+		for(int i = big_li; i <= big_ui; ++i)
+		for(int j = big_lj; j <= big_uj; ++j) {
+			if(i > 0)
+				new_h[i, j] += rate * gamma * (vh[i - 1, j] - vh[i, j]);
+			if(i < size - 1)
+				new_h[i, j] += rate * gamma * (vh[i + 1, j] - vh[i, j]);
+			if(j > 0)
+				new_h[i, j] += rate * gamma * (vh[i, j - 1] - vh[i, j]);
+			if(i < size - 1)
+				new_h[i, j] += rate * gamma * (vh[i, j + 1] - vh[i, j]);
+		}
 
 		//TODO: Update new_h by vh.
 
 		//Step 3
 		//TODO: old_h <- h; h <- new_h;
-
+		for(int i = 0; i < size; ++i)
+		for(int j = 0; j < size; ++j) {
+			old_h[i, j] = h[i, j];
+			h[i, j] = new_h[i, j];
+		}
 		//Step 4: Water->Block coupling.
 		//More TODO here.
 	}
@@ -177,9 +268,32 @@ public class wave_motion : MonoBehaviour
 		float[,] h     = new float[size, size];
 
 		//TODO: Load X.y into h.
+		for (int i=0; i<size; i++)
+		for (int j=0; j<size; j++) 
+		{
+			h[i, j] = X[i*size+j].y;
+		}
 
 		if (Input.GetKeyDown ("r")) 
 		{
+			int i = Random.Range(0, size);
+			int j = Random.Range(0, size);
+			float water = Random.Range(2, 5);
+			h[i, j] += water;
+			int num = 4;
+			if(i == 0 || i == size - 1)
+				num -= 1;
+			if(j == 0 || j == size - 1)
+				num -= 1;
+			float remove_water = water / num;
+			if(i > 0) 
+				h[i - 1, j] -= remove_water;
+			if(i < size - 1) 
+				h[i + 1, j] -= remove_water;
+			if(j > 0) 
+				h[i, j - 1] -= remove_water;
+			if(j < size - 1)
+				h[i, j + 1] -= remove_water;
 			//TODO: Add random water.
 		}
 	
@@ -189,7 +303,12 @@ public class wave_motion : MonoBehaviour
 		}
 
 		//TODO: Store h back into X.y and recalculate normal.
-
-		
+		for (int i=0; i<size; i++)
+		for (int j=0; j<size; j++) 
+		{
+			 X[i*size+j].y = h[i, j];
+		}
+		mesh.vertices  = X;
+		mesh.RecalculateNormals ();
 	}
 }
