@@ -350,4 +350,25 @@ The final result is shown as follows:
 
 ![bouncy house](lab3/results/bouncy_house.gif)
 
+
+
+## Pool Ripples
+
+Here are the steps to implement this assignment:
+
+1. Basic setup. we construct the water surface as a *size x size* planar mesh. every vertex of the mesh has a height related to it.
+
+2. Ripples. The height of every vertex is updated as the following formula, here Neumann boundary conditions used on the boundary of the area.
+   $$
+   h_{i, j}^{new} \leftarrow h_{i, j} + (h_{i, j} - h_{i, j}^{old}) * damping + (h_{i - 1, j} + h_{i + 1, j} + h_{i, j - 1} + h_{i, j + 1} - 4h_{i, j}) * rate
+   $$
+
+3. One way coupling from block to water. We use conjugate gradient (CG) method to solve the Poisson equation **Av = b**, where **A** is the masked Laplacian matrix (label area of blocks) and **b = (new_h - low_h) / rate**, **new_h** and **low_h** represents the current height computed from step 2 and the deired height in the masked area. after solving **Av = b**, we have a virtual height **v** corresponding to every vertex. then we get the final height of every vertex by (here $\gamma$ is used to diminish wave effect):
+   $$
+   h_{i, j}^{new} \leftarrow h_{i, j}^{new} + (v_{i - 1, j} + v_{i + 1, j} + v_{i, j - 1} + v_{i, j + 1}) * \gamma * rate
+   $$
+   After implementing the previous several steps, we get the final result:
+
+   ![pool ripples](lab4/results/pool_ripples.gif)
+
 ​			
